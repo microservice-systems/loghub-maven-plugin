@@ -83,6 +83,17 @@ public class LogHubMojo extends AbstractMojo {
         return Argument.version("version", v);
     }
 
+    private String getRevision(String branch, String commit, String time) {
+        String r = System.getenv("LOGHUB_REVISION");
+        if (r == null) {
+            r = System.getProperty("loghub.revision");
+            if (r == null) {
+                r = version;
+            }
+        }
+        return Argument.version("version", r);
+    }
+
     private void storeApplication(String application) {
         Argument.application("application", application);
 
