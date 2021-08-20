@@ -20,9 +20,13 @@ package systems.microservice.loghub.maven;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
+import org.apache.maven.plugin.logging.Log;
 import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
+import systems.microservice.loghub.sdk.util.Argument;
+import systems.microservice.loghub.sdk.util.FileUtil;
+import systems.microservice.loghub.sdk.util.TimeUtil;
 
 /**
  * @author Dmitry Kotlyarov
@@ -39,12 +43,55 @@ public class LogHubMojo extends AbstractMojo {
     @Parameter(defaultValue = "${project.version}", required = true, readonly = true)
     private String version;
 
-    private long buildTime;
-
     public LogHubMojo() {
     }
 
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
+        Log log = getLog();
+        log.info("Generating application metadata for LogHub...");
+        String application = getApplication();
+        String version = getVersion();
+        String buildTime = TimeUtil.format(System.currentTimeMillis());
+        log.info(String.format("Resource directory: %s", resourceDirectory));
+        log.info(String.format("loghub.application: %s", application));
+        log.info(String.format("loghub.version: %s", version));
+        log.info(String.format("loghub.build.time: %s", buildTime));
+        storeApplication(application);
+        storeVersion(version);
+    }
+
+    private String getApplication() {
+        String a = System.getenv("LOGHUB_APPLICATION");
+        if (a == null) {
+            a = System.getProperty("loghub.application");
+            if (a == null) {
+                a = artifactId;
+            }
+        }
+        return Argument.application("application", a);
+    }
+
+    private String getVersion() {
+        String v = System.getenv("LOGHUB_VERSION");
+        if (v == null) {
+            v = System.getProperty("loghub.version");
+            if (v == null) {
+                v = version;
+            }
+        }
+        return Argument.version("version", v);
+    }
+
+    private void storeApplication(String application) {
+        Argument.application("application", application);
+
+        FileUtil.store(String.format("%s/loghub", resourceDirectory), "application", application);
+    }
+
+    private void storeVersion(String version) {
+        Argument.version("version", version);
+
+        FileUtil.store(String.format("%s/loghub", resourceDirectory), "version", version);
     }
 }
