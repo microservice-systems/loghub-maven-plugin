@@ -107,18 +107,18 @@ public class LogHubMojo extends AbstractMojo {
     private void storeApplication(String application) {
         Argument.application("application", application);
 
-        FileUtil.store(String.format("%s/loghub", resourceDirectory), "application", application);
+        FileUtil.storeString(String.format("%s/loghub", resourceDirectory), "application", application);
     }
 
     private void storeVersion(String version) {
         Argument.version("version", version);
 
-        FileUtil.store(String.format("%s/loghub", resourceDirectory), "version", version);
+        FileUtil.storeString(String.format("%s/loghub", resourceDirectory), "version", version);
     }
 
     private void storeRevision(String revision) {
         Argument.notNull("revision", revision);
 
-        FileUtil.store(String.format("%s/loghub", resourceDirectory), "revision", revision);
+        FileUtil.storeString(String.format("%s/loghub", resourceDirectory), "revision", revision);
     }
 }
