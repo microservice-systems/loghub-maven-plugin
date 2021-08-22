@@ -26,6 +26,7 @@ import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import systems.microservice.loghub.sdk.util.Argument;
 import systems.microservice.loghub.sdk.util.FileUtil;
+import systems.microservice.loghub.sdk.util.StringUtil;
 import systems.microservice.loghub.sdk.util.TimeUtil;
 
 /**
@@ -53,15 +54,18 @@ public class LogHubMojo extends AbstractMojo {
     public void execute() throws MojoExecutionException, MojoFailureException {
         Log log = getLog();
         log.info("Generating application metadata for LogHub...");
+        String buildTime = TimeUtil.format(System.currentTimeMillis());
         String application = getApplication();
         String version = getVersion();
-        String buildTime = TimeUtil.format(System.currentTimeMillis());
+        String revision = getRevision(null, null, buildTime);
         log.info(String.format("Resource directory: %s", resourceDirectory));
         log.info(String.format("loghub.application: %s", application));
         log.info(String.format("loghub.version: %s", version));
+        log.info(String.format("loghub.revision: %s", revision));
         log.info(String.format("loghub.build.time: %s", buildTime));
         storeApplication(application);
         storeVersion(version);
+        storeRevision(revision);
     }
 
     private String getApplication() {
@@ -92,9 +96,12 @@ public class LogHubMojo extends AbstractMojo {
             r = System.getProperty("loghub.revision");
             if (r == null) {
                 r = revision;
+                if (r.equals("null") && (branch != null) && (commit != null)) {
+                    r = String.format("%s-%s", StringUtil.slug(branch), commit);
+                }
             }
         }
-        return !r.equals("null") ? r : null;
+        return !r.equals("null") ? r : StringUtil.slug(time);
     }
 
     private void storeApplication(String application) {
@@ -107,5 +114,11 @@ public class LogHubMojo extends AbstractMojo {
         Argument.version("version", version);
 
         FileUtil.store(String.format("%s/loghub", resourceDirectory), "version", version);
+    }
+
+    private void storeRevision(String revision) {
+        Argument.notNull("revision", revision);
+
+        FileUtil.store(String.format("%s/loghub", resourceDirectory), "revision", revision);
     }
 }
