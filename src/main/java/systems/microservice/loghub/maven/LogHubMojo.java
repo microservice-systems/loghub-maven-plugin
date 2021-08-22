@@ -38,7 +38,7 @@ public class LogHubMojo extends AbstractMojo {
     private String resourceDirectory;
 
     @Parameter(defaultValue = "${project.artifactId}", required = true, readonly = true)
-    private String artifactId;
+    private String application;
 
     @Parameter(defaultValue = "${project.version}", required = true, readonly = true)
     private String version;
@@ -69,7 +69,7 @@ public class LogHubMojo extends AbstractMojo {
         if (a == null) {
             a = System.getProperty("loghub.application");
             if (a == null) {
-                a = artifactId;
+                a = application;
             }
         }
         return Argument.application("application", a);
