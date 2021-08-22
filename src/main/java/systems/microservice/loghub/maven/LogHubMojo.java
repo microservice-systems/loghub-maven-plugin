@@ -43,6 +43,9 @@ public class LogHubMojo extends AbstractMojo {
     @Parameter(defaultValue = "${project.version}", required = true, readonly = true)
     private String version;
 
+    @Parameter(defaultValue = "null", required = true, readonly = true)
+    private String revision;
+
     public LogHubMojo() {
     }
 
@@ -88,10 +91,10 @@ public class LogHubMojo extends AbstractMojo {
         if (r == null) {
             r = System.getProperty("loghub.revision");
             if (r == null) {
-                r = version;
+                r = revision;
             }
         }
-        return Argument.version("version", r);
+        return !r.equals("null") ? r : null;
     }
 
     private void storeApplication(String application) {
