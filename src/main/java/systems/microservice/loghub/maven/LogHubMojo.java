@@ -35,8 +35,8 @@ import systems.microservice.loghub.sdk.util.TimeUtil;
  */
 @Mojo(name = "properties", defaultPhase = LifecyclePhase.GENERATE_RESOURCES, threadSafe = true)
 public class LogHubMojo extends AbstractMojo {
-    @Parameter(defaultValue = "${project.build.resources[0].directory}", required = true, readonly = true)
-    private String resourceDirectory;
+    @Parameter(defaultValue = "${project.build.directory}", required = true, readonly = true)
+    private String buildDirectory;
 
     @Parameter(defaultValue = "${project.artifactId}", required = true, readonly = true)
     private String application;
@@ -44,7 +44,7 @@ public class LogHubMojo extends AbstractMojo {
     @Parameter(defaultValue = "${project.version}", required = true, readonly = true)
     private String version;
 
-    @Parameter(defaultValue = "null", required = true, readonly = true)
+    @Parameter(defaultValue = "", required = true, readonly = true)
     private String revision;
 
     public LogHubMojo() {
@@ -53,19 +53,20 @@ public class LogHubMojo extends AbstractMojo {
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
         Log log = getLog();
-        log.info("Generating application metadata for LogHub...");
+        log.info("Generating application meta information for LogHub...");
+        String metaDirectory = buildDirectory + "/classes/META-INF";
         String buildTime = TimeUtil.format(System.currentTimeMillis());
         String application = getApplication();
         String version = getVersion();
         String revision = getRevision(null, null, buildTime);
-        log.info(String.format("Resource directory: %s", resourceDirectory));
+        log.info(String.format("Meta information directory: %s", metaDirectory));
         log.info(String.format("loghub.application: %s", application));
         log.info(String.format("loghub.version: %s", version));
         log.info(String.format("loghub.revision: %s", revision));
         log.info(String.format("loghub.build.time: %s", buildTime));
-        storeApplication(application);
-        storeVersion(version);
-        storeRevision(revision);
+        FileUtil.storeString(metaDirectory + "/loghub", "application", application);
+        FileUtil.storeString(metaDirectory + "/loghub", "version", version);
+        FileUtil.storeString(metaDirectory + "/loghub", "revision", revision);
     }
 
     private String getApplication() {
@@ -96,29 +97,15 @@ public class LogHubMojo extends AbstractMojo {
             r = System.getProperty("loghub.revision");
             if (r == null) {
                 r = revision;
-                if (r.equals("null") && (branch != null) && (commit != null)) {
-                    r = String.format("%s-%s", StringUtil.slug(branch), commit);
+                if (r.isEmpty()) {
+                    if ((branch != null) && (commit != null)) {
+                        r = String.format("%s-%s", StringUtil.slug(branch), commit);
+                    } else {
+                        r = StringUtil.slug(time);
+                    }
                 }
             }
         }
-        return !r.equals("null") ? r : StringUtil.slug(time);
-    }
-
-    private void storeApplication(String application) {
-        Argument.application("application", application);
-
-        FileUtil.storeString(String.format("%s/loghub", resourceDirectory), "application", application);
-    }
-
-    private void storeVersion(String version) {
-        Argument.version("version", version);
-
-        FileUtil.storeString(String.format("%s/loghub", resourceDirectory), "version", version);
-    }
-
-    private void storeRevision(String revision) {
-        Argument.notNull("revision", revision);
-
-        FileUtil.storeString(String.format("%s/loghub", resourceDirectory), "revision", revision);
+        return r;
     }
 }
